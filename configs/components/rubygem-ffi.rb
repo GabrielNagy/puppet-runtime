@@ -1,6 +1,6 @@
 component "rubygem-ffi" do |pkg, settings, platform|
-  pkg.version '1.9.25'
-  pkg.md5sum "e8923807b970643d9e356a65038769ac"
+  pkg.version '1.12.2'
+  pkg.md5sum "28dc3d1294a04b728d24ba025e331b13"
 
   instance_eval File.read('configs/components/_base-rubygem.rb')
 
@@ -15,11 +15,11 @@ component "rubygem-ffi" do |pkg, settings, platform|
     @component.install = []
 
     if platform.architecture == "x64"
-      pkg.md5sum "e263997763271fba35562245b450576f"
+      pkg.md5sum "06593d275984aae428cfd2a92f7da1c6"
       pkg.url "https://rubygems.org/downloads/ffi-#{pkg.get_version}-x64-mingw32.gem"
       pkg.mirror "#{settings[:buildsources_url]}/ffi-#{pkg.get_version}-x64-mingw32.gem"
     else
-      pkg.md5sum "3303124f1ca0ee3e59829301ffcad886"
+      pkg.md5sum "d4593e67e1c32264f4a833b701435d4f"
       pkg.url "https://rubygems.org/downloads/ffi-#{pkg.get_version}-x86-mingw32.gem"
       pkg.mirror "#{settings[:buildsources_url]}/ffi-#{pkg.get_version}-x86-mingw32.gem"
     end
