@@ -2,16 +2,14 @@ platform "solaris-11-sparc" do |plat|
   plat.servicedir "/lib/svc/manifest"
   plat.defaultdir "/lib/svc/method"
   plat.servicetype "smf"
-  plat.cross_compiled true
-  plat.vmpooler_template "solaris-11-x86_64"
+  plat.vmpooler_template "solaris-11-sparc"
   plat.add_build_repository 'http://solaris-11-reposync.delivery.puppetlabs.net:81', 'puppetlabs.com'
 
   packages = [
     "pl-binutils-sparc",
-    "pl-cmake",
+    # "pl-cmake",
     "pl-gcc-sparc",
-    "pl-pkg-config",
-    "pl-ruby"
+    # "pl-pkg-config",
   ]
 
   plat.provision_with("pkg install #{packages.join(' ')}")
@@ -44,12 +42,16 @@ conflict=nocheck
 action=nocheck
 # Install to the default base directory.
 basedir=default" > /var/tmp/vanagon-noask;
+
   echo "mirror=https://artifactory.delivery.puppetlabs.net/artifactory/generic__remote_opencsw_mirror/testing" > /var/tmp/vanagon-pkgutil.conf;
+  echo "wgetopts=--no-check-certificate" >> /var/tmp/vanagon-pkgutil.conf;
+
   pkgadd -n -a /var/tmp/vanagon-noask -d http://get.opencsw.org/now all
-  /opt/csw/bin/pkgutil --config=/var/tmp/vanagon-pkgutil.conf -y -i libffi_dev || exit 1;
+  /opt/csw/bin/pkgutil --config=/var/tmp/vanagon-pkgutil.conf -y -i libffi_dev cmake || exit 1;
   /opt/csw/bin/pkgutil -U && /opt/csw/bin/pkgutil -y -i gcc4g++ bison || exit 1
 
-  ntpdate pool.ntp.org]
+  # for some reason, this doesnt work properly
+  # ntpdate pool.ntp.org]
 
   plat.install_build_dependencies_with "pkg install ", " || [[ $? -eq 4 ]]"
   plat.output_dir File.join("solaris", "11", "PC1")
