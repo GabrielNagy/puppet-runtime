@@ -47,6 +47,7 @@ project 'agent-runtime-master' do |proj|
     proj.component 'rubygem-win32-dir'
     proj.component 'rubygem-win32-process'
     proj.component 'rubygem-win32-security'
+    proj.component 'rubygem-ffi-win32-extensions'
     proj.component 'rubygem-win32-service'
   end
 end
