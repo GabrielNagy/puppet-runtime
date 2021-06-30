@@ -91,6 +91,8 @@ end
 
 raise "Couldn't find a :ruby_version setting in the project file" unless proj.ruby_version
 ruby_base_version = proj.ruby_version.gsub(/(\d+)\.(\d+)\.(\d+)/, '\1.\2.0')
+ruby_version_y = proj.ruby_version.gsub(/(\d+)\.(\d+)\.(\d+)/, '\1.\2')
+
 proj.setting(:gem_home, File.join(proj.libdir, 'ruby', 'gems', ruby_base_version))
 proj.setting(:ruby_vendordir, File.join(proj.libdir, "ruby", "vendor_ruby"))
 
@@ -101,6 +103,7 @@ platform_triple = "powerpc64le-suse-linux" if platform.architecture == "ppc64le"
 platform_triple = "powerpc64le-linux-gnu" if platform.architecture == "ppc64el"
 platform_triple = "arm-linux-gnueabihf" if platform.architecture == "armhf"
 platform_triple = "aarch64-redhat-linux" if platform.name == 'el-7-aarch64'
+platform_triple = "aarch64-apple-darwin" if platform.name == 'osx-11-arm64'
 
 if platform.is_windows?
   proj.setting(:host_ruby, File.join(proj.ruby_bindir, "ruby.exe"))
@@ -114,9 +117,16 @@ elsif platform.is_cross_compiled_linux? || (platform.is_solaris? && platform.arc
     proj.setting(:host_ruby, "/opt/pl-build-tools/bin/ruby")
     proj.setting(:host_gem, "/opt/pl-build-tools/bin/gem")
   end
+elsif platform.name == 'osx-11-arm64'
+  proj.setting(:host_ruby, "/usr/local/opt/ruby@#{ruby_version_y}/bin/ruby")
+  proj.setting(:host_gem, "/usr/local/opt/ruby@#{ruby_version_y}/bin/gem")
 else
   proj.setting(:host_ruby, File.join(proj.ruby_bindir, "ruby"))
   proj.setting(:host_gem, File.join(proj.ruby_bindir, "gem"))
+end
+
+if platform.name == 'osx-11-arm64'
+  host = "--host aarch64-apple-darwin --build x86_64-apple-darwin --target aarch64-apple-darwin"
 end
 
 if platform.is_cross_compiled_linux?
@@ -198,8 +208,12 @@ if platform.is_macos?
   # Additionally, OS X doesn't use RPATH for linking. We shouldn't
   # define it or try to force it in the linker, because this might
   # break gcc or clang if they try to use the RPATH values we forced.
+  if platform.is_cross_compiled?
+    proj.setting(:cflags, "#{proj.cppflags}")
+  else
+    proj.setting(:cflags, "-march=core2 -msse4 #{proj.cppflags}")
+  end
   proj.setting(:cppflags, "-I#{proj.includedir}")
-  proj.setting(:cflags, "-march=core2 -msse4 #{proj.cppflags}")
   proj.setting(:ldflags, "-L#{proj.libdir} ")
 end
 

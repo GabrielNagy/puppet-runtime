@@ -43,7 +43,7 @@ component 'ruby-2.5.9' do |pkg, settings, platform|
   # Patch for https://bugs.ruby-lang.org/issues/14972
   pkg.apply_patch "#{base}/net_http_eof_14972_r2.5.patch"
 
-  if platform.is_cross_compiled?
+  if platform.is_cross_compiled? && !platform.is_macos?
     pkg.apply_patch "#{base}/uri_generic_remove_safe_nav_operator_r2.5.patch"
     if platform.name =~ /^solaris-10-sparc/
       pkg.apply_patch "#{base}/Solaris-only-Replace-reference-to-RUBY-var-with-opt-pl-build-tool.patch"
@@ -74,7 +74,11 @@ component 'ruby-2.5.9' do |pkg, settings, platform|
   ####################
 
   if platform.is_macos? || platform.name =~ /^sles-11-i386/  # -O(>0) flags produce errors on 32-bit SLES 11 with GCC 4.8.2, see PA-2138
-    pkg.environment 'optflags', settings[:cflags]
+    if platform.name == 'osx-11-arm64'
+      pkg.environment 'optflags', '-DUSE_FFI_CLOSURE_ALLOC'
+    else
+      pkg.environment 'optflags', settings[:cflags]
+    end
   elsif platform.is_windows?
     pkg.environment 'optflags', settings[:cflags] + ' -O3'
   elsif platform.is_cross_compiled?
@@ -93,7 +97,7 @@ component 'ruby-2.5.9' do |pkg, settings, platform|
     # This normalizes the build string to something like AIX 7.1.0.0 rather
     # than AIX 7.1.0.2 or something
     special_flags += " --build=#{settings[:platform_triple]} "
-  elsif platform.is_cross_compiled_linux?
+  elsif platform.is_cross_compiled_linux? || platform.name == 'osx-11-arm64'
     special_flags += " --with-baseruby=#{host_ruby} "
   elsif platform.is_solaris? && platform.architecture == "sparc"
     special_flags += " --with-baseruby=#{host_ruby} --enable-close-fds-by-recvmsg-with-peek "
@@ -107,6 +111,7 @@ component 'ruby-2.5.9' do |pkg, settings, platform|
     'cisco-wrlinux-7-x86_64',
     'el-7-ppc64le',
     'el-7-aarch64',
+    'osx-11-arm64',
     'eos-4-i386',
     'redhatfips-7-x86_64',
     'sles-11-x86_64',
@@ -168,6 +173,7 @@ component 'ruby-2.5.9' do |pkg, settings, platform|
 
   target_doubles = {
     'powerpc-ibm-aix7.1.0.0' => 'powerpc-aix7.1.0.0',
+    'aarch64-apple-darwin' => 'aarch64-darwin',
     'aarch64-redhat-linux' => 'aarch64-linux',
     'ppc64-redhat-linux' => 'powerpc64-linux',
     'ppc64le-redhat-linux' => 'powerpc64le-linux',
@@ -192,8 +198,12 @@ component 'ruby-2.5.9' do |pkg, settings, platform|
   if platform.is_aix?
     rbconfig_changes["CC"] = "gcc"
   elsif platform.is_cross_compiled? || platform.is_solaris?
-    rbconfig_changes["CC"] = "gcc"
-    rbconfig_changes["warnflags"] = "-Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wno-tautological-compare -Wno-parentheses-equality -Wno-constant-logical-operand -Wno-self-assign -Wunused-variable -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wno-maybe-uninitialized"
+    if platform.is_macos?
+      rbconfig_changes["CC"] = "clang -target arm64-apple-macos11"
+    else
+      rbconfig_changes["CC"] = "gcc"
+      rbconfig_changes["warnflags"] = "-Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wno-tautological-compare -Wno-parentheses-equality -Wno-constant-logical-operand -Wno-self-assign -Wunused-variable -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wno-maybe-uninitialized"
+    end
     if platform.name =~ /el-7-ppc64/
       # EL 7 on POWER will fail with -Wl,--compress-debug-sections=zlib so this
       # will remove that entry

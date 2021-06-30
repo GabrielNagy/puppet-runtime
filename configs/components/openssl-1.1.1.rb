@@ -63,7 +63,11 @@ component 'openssl' do |pkg, settings, platform|
     pkg.environment 'PATH', '/opt/pl-build-tools/bin:$(PATH):/usr/local/bin'
 
     cflags = settings[:cflags]
-    target = 'darwin64-x86_64-cc'
+    target = if platform.is_cross_compiled?
+               'darwin64-arm64-cc'
+             else
+               'darwin64-x86_64-cc'
+             end
   elsif platform.is_linux?
     pkg.environment 'PATH', '/opt/pl-build-tools/bin:$(PATH):/usr/local/bin'
 
@@ -166,7 +170,7 @@ component 'openssl' do |pkg, settings, platform|
     install_commands << "slibclean"
   end
 
-  install_commands << "#{platform[:make]} #{install_prefix} install"
+  install_commands << "#{platform[:make]} #{install_prefix} install_sw"
 
   if settings[:runtime_project] == 'pdk'
     install_commands << "rm -f #{settings[:prefix]}/bin/{openssl,c_rehash}"

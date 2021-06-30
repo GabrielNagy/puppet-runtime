@@ -46,6 +46,11 @@ elsif platform.is_windows?
   pkg.environment 'LDFLAGS', settings[:ldflags]
   pkg.environment 'optflags', settings[:cflags] + ' -O3'
 elsif platform.is_macos?
+  if platform.is_cross_compiled?
+    pkg.build_requires "ruby@#{ruby_version_y}"
+    pkg.environment 'CC', 'clang -target arm64-apple-macos11'
+  end
+
   pkg.environment 'optflags', settings[:cflags]
 end
 
